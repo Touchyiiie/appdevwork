@@ -1,28 +1,24 @@
 from pymongo.mongo_client import MongoClient
 from flask import Flask,jsonify,request
-from flask_basicauth import BasicAuth
-
+from flask_cors import CORS,cross_origin
+#initial
 app = Flask(__name__)
 uri = "mongodb+srv://touchlovegta:iepbn1TvXn4fux3u@cluster0.sihikmr.mongodb.net/?retryWrites=true&w=majority"
-#Basic Auth
-app.config['BASIC_AUTH_USERNAME'] ='kitsanaphong'
-app.config['BASIC_AUTH_PASSWORD'] ='helloworld'
-basic_auth = BasicAuth(app)
-
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 def get_mongo_client():
     return MongoClient(uri)
 
 @app.route("/")
-def Greeting_first():
-    return "<center><p>Welcome to Student Management API </p></center>"
+def Greet():
+    return "<center><p>Welcome to Products Management API </p></center>"
 
-@app.route("/students", methods=["GET"])
-@basic_auth.required
-def show_all_student():
+@app.route("/products", methods=["GET"])
+def show_all_products():
     try:
         client = get_mongo_client()
-        db = client.students
-        collection = db.std_info
+        db = client.product
+        collection = db.products_info
         all_students = list(collection.find())
         return jsonify(all_students)
     except Exception as e:
@@ -30,67 +26,65 @@ def show_all_student():
     finally:
         client.close()
 
-@app.route("/students/<int:std_id>", methods=["GET"])
-@basic_auth.required
-def get_student_by_id(std_id):
+@app.route("/products/<int:prod_id>", methods=["GET"])
+def get_products_by_id(prod_id):
     try:
         client = get_mongo_client()
-        db = client.students
-        collection = db.std_info
-        std = collection.find_one({"_id": str(std_id)})
-        if not std:
-            return jsonify({"error": "Student not found"}), 404
-        return jsonify(std)
+        db = client.product
+        collection = db.products_info
+        product = collection.find_one({"_id": prod_id})
+        if not product:
+            return jsonify({"error": "Product not found"}), 404
+        return jsonify(product)
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:
         client.close()
-@app.route("/students", methods=["POST"])
-@basic_auth.required
+@app.route("/products", methods=["POST"])
 def add_std():
     try:
         client = get_mongo_client()
-        db = client.students
-        collection = db.std_info
+        db = client.product
+        collection = db.products_info
         data = request.get_json()
         already_data = collection.find_one({"_id": data.get("_id")})
         if already_data:
-            return jsonify({"error":"Cannot create new student"}), 500
+            return jsonify({"error":"Cannot create new product"}), 500
         collection.insert_one(data)
         return jsonify(data), 200
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:
         client.close()
-@app.route("/students/<int:std_id>", methods=["PUT"])
-@basic_auth.required
-def update_student(std_id):
+@app.route("/products/<int:prod_id>", methods=["PUT"])
+@cross_origin()
+def update_products(prod_id):
     try:
         client = get_mongo_client()
-        db = client.students
-        collection = db.std_info
+        db = client.product
+        collection = db.products_info
         data = request.get_json()
-        std_data = collection.find_one({"_id": str(std_id)})
-        if not std_data:
-            return jsonify({"error":"Student not found"}), 404
-        collection.update_one({"_id":str(std_id)}, {"$set": data})
+        product_data = collection.find_one({"_id": prod_id})
+        if not product_data:
+            return jsonify({"error":"Product not found"}), 404
+        collection.update_one({"_id":prod_id}, {"$set": data})
         return jsonify(data), 200
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:
         client.close()
-@app.route("/students/<int:std_id>", methods=["DELETE"])
-@basic_auth.required
-def delete_student(std_id):
+@app.route("/products/<int:prod_id>", methods=["DELETE"])
+@cross_origin()
+def delete_products(prod_id):
     try:
         client = get_mongo_client()
-        db = client.students
-        collection = db.std_info
-        std_data = collection.find_one({"_id": str(std_id)})
-        if not std_data:
-            return jsonify({"error":"Student not found"}), 404
-        collection.delete_one({"_id": str(std_id)})
-        return jsonify({"message":"Student deleted successfully"}), 200
+        db = client.product
+        collection = db.products_info
+        product_data = collection.find_one({"_id": prod_id})
+        if not product_data:
+            return jsonify({"error":"Product not found"}), 404
+        collection.delete_one({"_id": prod_id})
+        return jsonify({"message":"Product deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)})
     finally:
